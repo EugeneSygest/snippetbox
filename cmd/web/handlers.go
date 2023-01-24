@@ -13,7 +13,7 @@ import (
 // структуры *application.
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		app.notFound(w)
 		return
 	}
 	// Инициализируем срез содержащий пути к двум файлам. Обратите внимание, что
@@ -29,8 +29,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		// Поскольку обработчик home теперь является методом структуры application
 		// он может получить доступ к логгерам из структуры.
 		// Используем их вместо стандартного логгера от Go.
-		app.errorLog.Println(err.Error())
-		http.Error(w, "Внутренняя ошибка сервера", 500)
+		app.serverError(w, err)
 		return
 	}
 
@@ -38,15 +37,14 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Обновляем код для использования логгера-ошибок
 		// из структуры application.
-		app.errorLog.Println(err.Error())
-		http.Error(w, "Внутренняя ошибка сервера", 500)
+		app.serverError(w, err)
 	}
 }
 
 func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil || id < 1 {
-		http.NotFound(w, r)
+		app.notFound(w)
 		return
 	}
 
@@ -58,7 +56,7 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", http.MethodPost)
-		http.Error(w, "Метод не дозволен", 405)
+		app.clientError(w, http.StatusMethodNotAllowed)
 		return
 	}
 
