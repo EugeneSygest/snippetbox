@@ -8,26 +8,33 @@ import (
 	"path/filepath"
 )
 
+// Создаем структуру `application` для хранения зависимостей всего веб-приложения.
+// Пока, что мы добавим поля только для двух логгеров, но
+// мы будем расширять данную структуру по мере усложнения приложения.
+type application struct {
+	errorLog *log.Logger
+	infoLog  *log.Logger
+}
+
 func main() {
 	addr := flag.String("addr", ":4000", "Сетевой адрес HTTP")
 	flag.Parse()
 
-	// Используйте log.New() для создания логгера для записи информационных сообщений. Для этого нужно
-	// три параметра: место назначения для записи логов (os.Stdout), строка
-	// с префиксом сообщения (INFO или ERROR) и флаги, указывающие, какая
-	// дополнительная информация будет добавлена. Обратите внимание, что флаги
-	// соединяются с помощью оператора OR |.
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 
-	// Создаем логгер для записи сообщений об ошибках таким же образом, но используем stderr как
-	// место для записи и используем флаг log.Lshortfile для включения в лог
-	// названия файла и номера строки где обнаружилась ошибка.
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
+	// Инициализируем новую структуру с зависимостями приложения.
+	app := &application{
+		errorLog: errorLog,
+		infoLog:  infoLog,
+	}
+
+	// Используем методы из структуры в качестве обработчиков маршрутов.
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", home)
-	mux.HandleFunc("/snippet", showSnippet)
-	mux.HandleFunc("/snippet/create", createSnippet)
+	mux.HandleFunc("/", app.home)
+	mux.HandleFunc("/snippet", app.showSnippet)
+	mux.HandleFunc("/snippet/create", app.createSnippet)
 
 	fileServer := http.FileServer(neuteredFileSystem{http.Dir("./ui/static/")})
 	mux.Handle("/static", http.NotFoundHandler())
