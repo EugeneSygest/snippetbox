@@ -30,24 +30,10 @@ func main() {
 		infoLog:  infoLog,
 	}
 
-	// Используем методы из структуры в качестве обработчиков маршрутов.
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", app.home)
-	mux.HandleFunc("/snippet", app.showSnippet)
-	mux.HandleFunc("/snippet/create", app.createSnippet)
-
-	fileServer := http.FileServer(neuteredFileSystem{http.Dir("./ui/static/")})
-	mux.Handle("/static", http.NotFoundHandler())
-	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
-
-	// Инициализируем новую структуру http.Server. Мы устанавливаем поля Addr и Handler, так
-	// что сервер использует тот же сетевой адрес и маршруты, что и раньше, и назначаем
-	// поле ErrorLog, чтобы сервер использовал наш логгер
-	// при возникновении проблем.
 	srv := &http.Server{
 		Addr:     *addr,
 		ErrorLog: errorLog,
-		Handler:  mux,
+		Handler:  app.routes(), //вызов нового метода app.routes
 	}
 
 	infoLog.Printf("Запуск сервера на %s", *addr)
